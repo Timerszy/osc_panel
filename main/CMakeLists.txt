@@ -1,0 +1,27 @@
+idf_component_register(
+    SRCS
+        "main.c"
+        "encoder.c"
+        "button.c"
+        "led.c"
+        "lcd_st7789.c"
+        "uart_comm.c"
+        "wifi_log.c"
+        "waveform.c"
+        "adc_sampler.c"
+    INCLUDE_DIRS
+        "."
+    REQUIRES
+        driver
+        esp_driver_gpio
+        esp_driver_spi
+        esp_driver_uart
+        freertos
+        log
+        esp_wifi
+        esp_event
+        esp_netif
+        nvs_flash
+        lwip
+        esp_adc
+)

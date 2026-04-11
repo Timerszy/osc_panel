@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash -c 'source $IDF_PATH/export.sh 2>/dev/null && idf.py build 2>&1 | tail -60')",
+      "Bash(cmd /c \"cd /d d:\\\\Projects\\\\ESP\\\\osc_panel && set IDF_PATH=C:\\\\Espressif\\\\frameworks\\\\esp-idf-v5.4.1 && C:\\\\Espressif\\\\frameworks\\\\esp-idf-v5.4.1\\\\export.bat && idf.py build 2>&1\")",
+      "Read(//c/Espressif//**)",
+      "Read(//mnt/c/**)",
+      "Bash(where idf.py)",
+      "Bash(python -c \"import idf\")",
+      "Bash(export IDF_PATH=\"/d/esp/v5.5.3/esp-idf\")",
+      "Bash(export PATH=\"/c/Espressif/tools/idf-exe/1.0.3:$PATH\")",
+      "Bash(idf.py.exe build:*)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d.get\\('VIRTUAL_ENV',''\\)\\)\")",
+      "Read(//c/Espressif/**)",
+      "Bash(export PATH=\"/c/Espressif/tools/cmake/3.30.2/bin:/c/Espressif/tools/ninja/1.12.1:/c/Espressif/tools/xtensa-esp-elf/esp-14.2.0_20241119/xtensa-esp-elf/bin:$PATH\")",
+      "Bash(/c/Espressif/tools/python/v5.5.3/venv/Scripts/python.exe /d/esp/v5.5.3/esp-idf/tools/idf.py build)",
+      "Bash(grep -v \"^esp-idf$\")",
+      "Bash(python3 -c ':*)",
+      "Bash(python3)"
+    ]
+  }
+}
