@@ -25,10 +25,11 @@
 #define LED_TDR_PIN     GPIO_NUM_15
 
 /* ─── SPI LCD (ST7789, 240x240) ─── */
+/* GPIO35/36/37 在 N16R8 上被 Octal PSRAM 占用，改用 GPIO41/42/47 */
 #define LCD_SPI_HOST    SPI2_HOST
-#define LCD_PIN_MOSI    GPIO_NUM_35
-#define LCD_PIN_SCLK    GPIO_NUM_36
-#define LCD_PIN_CS      GPIO_NUM_37
+#define LCD_PIN_MOSI    GPIO_NUM_41
+#define LCD_PIN_SCLK    GPIO_NUM_42
+#define LCD_PIN_CS      GPIO_NUM_47
 #define LCD_PIN_DC      GPIO_NUM_38
 #define LCD_PIN_RST     GPIO_NUM_39
 #define LCD_PIN_BL      GPIO_NUM_40
