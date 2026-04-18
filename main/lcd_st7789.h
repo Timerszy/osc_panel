@@ -55,3 +55,6 @@ void lcd_draw_hline(uint16_t x, uint16_t y, uint16_t w, uint16_t color);
 
 /** @brief 绘制垂直线 */
 void lcd_draw_vline(uint16_t x, uint16_t y, uint16_t h, uint16_t color);
+
+/** @brief 将帧缓冲区内容一次性刷新到 LCD（消除撕裂） */
+void lcd_flush(void);

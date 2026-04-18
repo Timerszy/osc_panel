@@ -160,6 +160,14 @@ static void heartbeat_task(void *pv)
 }
 
 /* ══════════════════════════════════════════════════════
+ * ADC 采集完成回调 → 喂入波形模块
+ * ════════════════════════════════════════════════════*/
+static void adc_cb(uint8_t ch, const uint16_t *samples, uint16_t count)
+{
+    waveform_feed(ch, samples, count);
+}
+
+/* ══════════════════════════════════════════════════════
  * app_main
  * ════════════════════════════════════════════════════*/
 void app_main(void)
@@ -189,7 +197,8 @@ void app_main(void)
     button_init();
 
     /* ── 切换为 ADC 实采时取消下方注释 ──
-    adc_sampler_init(adc_cb); // adc_cb: 调用 waveform_feed + waveform_set_source
+    adc_sampler_init(adc_cb);
+    waveform_set_source(WAVE_SRC_ADC);
     adc_sampler_start();
     ── */
 

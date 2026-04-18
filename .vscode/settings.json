@@ -7,5 +7,5 @@
     "idf.buildPath": "${workspaceFolder}/build",
     "idf.currentSetup": "D:\\esp\\v5.5.3\\esp-idf",
     "idf.flashType": "UART",
-    "idf.portWin": "COM4"
+    "idf.portWin": "COM6"
 }

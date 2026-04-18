@@ -20,11 +20,13 @@ void led_init(void)
         .intr_type    = GPIO_INTR_DISABLE,
         .pin_bit_mask = (1ULL << LED_RUN_PIN) |
                         (1ULL << LED_SCOPE_PIN) |
-                        (1ULL << LED_TDR_PIN),
+                        (1ULL << LED_TDR_PIN) |
+                        (1ULL << WS2812_PIN),
     };
     gpio_config(&cfg);
+    gpio_set_level(WS2812_PIN, 0);   /* 关闭板载 WS2812B RGB LED */
     led_update(MODE_IDLE);
-    ESP_LOGI(TAG, "LEDs initialized");
+    ESP_LOGI(TAG, "LEDs initialized (WS2812 off)");
 }
 
 void led_update(system_mode_t mode)

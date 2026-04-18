@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "osc_panel",
-    "project_version":    "1",
+    "project_version":    "0253336-dirty",
     "project_path":       "D:/Projects/ESP/osc_panel",
     "idf_path":           "D:/esp/v5.5.3/esp-idf",
     "build_dir":          "D:/Projects/ESP/osc_panel/build",
@@ -940,7 +940,7 @@
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "file": "D:/Projects/ESP/osc_panel/build/esp-idf/esp_psram/libesp_psram.a",
-            "sources": [ "D:/esp/v5.5.3/esp-idf/components/esp_psram/system_layer/esp_psram_mspi.c" ],
+            "sources": [ "D:/esp/v5.5.3/esp-idf/components/esp_psram/system_layer/esp_psram_mspi.c", "D:/esp/v5.5.3/esp-idf/components/esp_psram/system_layer/esp_psram.c", "D:/esp/v5.5.3/esp-idf/components/esp_psram/esp32s3/esp_psram_impl_octal.c", "D:/esp/v5.5.3/esp-idf/components/esp_psram/device", "D:/esp/v5.5.3/esp-idf/components/esp_psram/xip_impl/mmu_psram_flash.c" ],
             "include_dirs": [ "include", "xip_impl/include" ]
         },
         "esp_ringbuf": {
@@ -1285,7 +1285,7 @@
             "managed_reqs": [],
             "managed_priv_reqs": [],
             "file": "D:/Projects/ESP/osc_panel/build/esp-idf/newlib/libnewlib.a",
-            "sources": [ "D:/esp/v5.5.3/esp-idf/components/newlib/src/init.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/abort.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/assert.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/heap.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/locks.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/poll.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/pthread.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/random.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/getentropy.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/termios.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/stdatomic.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/time.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/sysconf.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/realpath.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/scandir.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/syscalls.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/reent_syscalls.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/port/esp_time_impl.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/flockfile.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/reent_init.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/newlib_init.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/port/esp_time_impl.c" ],
+            "sources": [ "D:/esp/v5.5.3/esp-idf/components/newlib/src/init.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/abort.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/assert.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/heap.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/locks.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/poll.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/pthread.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/random.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/getentropy.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/termios.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/stdatomic.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/time.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/sysconf.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/realpath.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/scandir.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/syscalls.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/reent_syscalls.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/port/esp_time_impl.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/port/xtensa/stdatomic_s32c1i.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/flockfile.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/reent_init.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/newlib_init.c", "D:/esp/v5.5.3/esp-idf/components/newlib/src/port/esp_time_impl.c" ],
             "include_dirs": [ "platform_include" ]
         },
         "nvs_flash": {

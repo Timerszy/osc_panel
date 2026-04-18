@@ -5,6 +5,7 @@
 #include "driver/spi_master.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_heap_caps.h"
 #include <string.h>
 
 static const char *TAG = "LCD";
@@ -123,6 +124,15 @@ static const uint8_t s_font6x8[][6] = {
 /* ─── SPI 句柄 ─── */
 static spi_device_handle_t s_spi;
 
+/* ─── 帧缓冲区 (PSRAM, 存储字节序已交换为 SPI big-endian) ─── */
+#define FB_PIXELS (LCD_WIDTH * LCD_HEIGHT)
+static uint16_t *s_fb;
+
+static inline uint16_t swap16(uint16_t c)
+{
+    return (c >> 8) | (c << 8);
+}
+
 /* ─── DC 引脚由 pre_transfer 回调控制 ─── */
 static void IRAM_ATTR lcd_spi_pre_cb(spi_transaction_t *t)
 {
@@ -183,6 +193,13 @@ static void lcd_set_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
 
 void lcd_init(void)
 {
+    /* 0. 分配帧缓冲区 (优先 PSRAM, 回退内部 SRAM) */
+    s_fb = heap_caps_malloc(FB_PIXELS * sizeof(uint16_t), MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!s_fb) {
+        s_fb = heap_caps_malloc(FB_PIXELS * sizeof(uint16_t), MALLOC_CAP_DMA | MALLOC_CAP_8BIT);
+    }
+    assert(s_fb);
+
     /* 1. SPI 总线 */
     spi_bus_config_t bus_cfg = {
         .mosi_io_num   = LCD_PIN_MOSI,
@@ -190,7 +207,7 @@ void lcd_init(void)
         .sclk_io_num   = LCD_PIN_SCLK,
         .quadwp_io_num = -1,
         .quadhd_io_num = -1,
-        .max_transfer_sz = LCD_WIDTH * LCD_HEIGHT * 2,
+        .max_transfer_sz = FB_PIXELS * 2,
     };
     spi_bus_initialize(LCD_SPI_HOST, &bus_cfg, SPI_DMA_CH_AUTO);
 
@@ -249,29 +266,35 @@ void lcd_init(void)
     gpio_set_level(LCD_PIN_BL, 1);
 
     lcd_fill(LCD_BLACK);
-    ESP_LOGI(TAG, "ST7789 initialized (%dx%d)", LCD_WIDTH, LCD_HEIGHT);
+    lcd_flush();
+    ESP_LOGI(TAG, "ST7789 initialized (%dx%d, framebuffer=%s)",
+             LCD_WIDTH, LCD_HEIGHT,
+             esp_ptr_external_ram(s_fb) ? "PSRAM" : "SRAM");
 }
 
 void lcd_fill_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color)
 {
     if (w == 0 || h == 0) return;
-    lcd_set_window(x, y, x + w - 1, y + h - 1);
-
-    /* 每次发送一行, 复用行缓冲 */
-    static uint8_t line_buf[LCD_WIDTH * 2];
-    uint8_t hi = color >> 8, lo = color & 0xFF;
-    for (int i = 0; i < w * 2; i += 2) {
-        line_buf[i]     = hi;
-        line_buf[i + 1] = lo;
-    }
-    for (int row = 0; row < h; row++) {
-        lcd_data_buf(line_buf, w * 2);
+    uint16_t xe = x + w, ye = y + h;
+    if (xe > LCD_WIDTH)  xe = LCD_WIDTH;
+    if (ye > LCD_HEIGHT) ye = LCD_HEIGHT;
+    uint16_t sc = swap16(color);
+    for (uint16_t r = y; r < ye; r++) {
+        uint16_t *row = &s_fb[r * LCD_WIDTH];
+        for (uint16_t c = x; c < xe; c++) {
+            row[c] = sc;
+        }
     }
 }
 
 void lcd_fill(uint16_t color)
 {
-    lcd_fill_rect(0, 0, LCD_WIDTH, LCD_HEIGHT, color);
+    if (color == 0x0000) {
+        memset(s_fb, 0, FB_PIXELS * sizeof(uint16_t));
+    } else {
+        uint16_t sc = swap16(color);
+        for (int i = 0; i < FB_PIXELS; i++) s_fb[i] = sc;
+    }
 }
 
 void lcd_draw_char(uint16_t x, uint16_t y, char ch,
@@ -279,15 +302,24 @@ void lcd_draw_char(uint16_t x, uint16_t y, char ch,
 {
     if (ch < 0x20 || ch > 0x7E) ch = '?';
     const uint8_t *glyph = s_font6x8[(uint8_t)(ch - 0x20)];
+    uint16_t sfg = swap16(fg), sbg = swap16(bg);
 
-    /* 对每列逐位渲染 */
     for (uint8_t col = 0; col < 6; col++) {
         uint8_t col_data = glyph[col];
         for (uint8_t row = 0; row < 8; row++) {
-            uint16_t px = x + col * scale;
-            uint16_t py = y + row * scale;
-            uint16_t color = (col_data & (1 << row)) ? fg : bg;
-            lcd_fill_rect(px, py, scale, scale, color);
+            uint16_t sc = (col_data & (1 << row)) ? sfg : sbg;
+            if (scale == 1) {
+                uint16_t px = x + col, py = y + row;
+                if (px < LCD_WIDTH && py < LCD_HEIGHT)
+                    s_fb[py * LCD_WIDTH + px] = sc;
+            } else {
+                uint16_t px = x + col * scale;
+                uint16_t py = y + row * scale;
+                for (uint8_t sy = 0; sy < scale; sy++)
+                    for (uint8_t sx = 0; sx < scale; sx++)
+                        if (px + sx < LCD_WIDTH && py + sy < LCD_HEIGHT)
+                            s_fb[(py + sy) * LCD_WIDTH + (px + sx)] = sc;
+            }
         }
     }
 }
@@ -311,4 +343,20 @@ void lcd_draw_hline(uint16_t x, uint16_t y, uint16_t w, uint16_t color)
 void lcd_draw_vline(uint16_t x, uint16_t y, uint16_t h, uint16_t color)
 {
     lcd_fill_rect(x, y, 1, h, color);
+}
+
+void lcd_flush(void)
+{
+    /* 用内部 DMA 缓冲区逐行发送，避免 PSRAM cache 一致性问题 */
+    static uint8_t *s_dma_line;
+    if (!s_dma_line) {
+        s_dma_line = heap_caps_malloc(LCD_WIDTH * 2, MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL);
+        assert(s_dma_line);
+    }
+
+    lcd_set_window(0, 0, LCD_WIDTH - 1, LCD_HEIGHT - 1);
+    for (int y = 0; y < LCD_HEIGHT; y++) {
+        memcpy(s_dma_line, &s_fb[y * LCD_WIDTH], LCD_WIDTH * 2);
+        lcd_data_buf(s_dma_line, LCD_WIDTH * 2);
+    }
 }

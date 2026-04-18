@@ -24,6 +24,9 @@
 #define LED_SCOPE_PIN   GPIO_NUM_14
 #define LED_TDR_PIN     GPIO_NUM_15
 
+/* ─── 板载 WS2812B RGB LED ─── */
+#define WS2812_PIN      GPIO_NUM_48
+
 /* ─── SPI LCD (ST7789, 240x240) ─── */
 /* GPIO35/36/37 在 N16R8 上被 Octal PSRAM 占用，改用 GPIO41/42/47 */
 #define LCD_SPI_HOST    SPI2_HOST

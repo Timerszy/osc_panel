@@ -234,10 +234,14 @@ void waveform_render(const system_state_t *state)
     static uint8_t ypx[2][WAVE_SAMPLES];
 
     if (s_src == WAVE_SRC_SINE) {
+        static float s_phase = 0.0f;
+        s_phase += 0.15f;
+        if (s_phase > 2.0f * (float)M_PI) s_phase -= 2.0f * (float)M_PI;
+
         float cyc1 = timebase_to_cycles(state->ch[0].timebase_idx);
         float cyc2 = timebase_to_cycles(state->ch[1].timebase_idx);
-        gen_sine_pixels(ypx[0], WAVE_SAMPLES, cyc1, 2.8f, 0.0f);
-        gen_sine_pixels(ypx[1], WAVE_SAMPLES, cyc2, 2.0f, (float)M_PI / 3.0f);
+        gen_sine_pixels(ypx[0], WAVE_SAMPLES, cyc1, 2.8f, s_phase);
+        gen_sine_pixels(ypx[1], WAVE_SAMPLES, cyc2, 2.0f, s_phase + (float)M_PI / 3.0f);
     } else {
         xSemaphoreTake(s_mutex, portMAX_DELAY);
         adc_to_pixels(ypx[0], s_adc[0], WAVE_SAMPLES, state->ch[0].voltscale_idx);
@@ -250,4 +254,7 @@ void waveform_render(const system_state_t *state)
 
     /* 4. 顶部信息栏 */
     draw_info_bar(state);
+
+    /* 5. 一次性刷新到 LCD（消除撕裂） */
+    lcd_flush();
 }
