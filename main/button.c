@@ -18,10 +18,10 @@ typedef struct {
 } btn_ctx_t;
 
 static btn_ctx_t s_btn[BTN_COUNT] = {
-    {BTN_RUN_PIN,   BTN_RUN,   NULL, 0},
-    {BTN_SCOPE_PIN, BTN_SCOPE, NULL, 0},
-    {BTN_TDR_PIN,   BTN_TDR,   NULL, 0},
-    {BTN_RESET_PIN, BTN_RESET, NULL, 0},
+    {BTN_RUN_PIN, BTN_RUN, NULL, 0},
+    {BTN_CH1_PIN, BTN_CH1, NULL, 0},
+    {BTN_TDR_PIN, BTN_TDR, NULL, 0},
+    {BTN_CH2_PIN, BTN_CH2, NULL, 0},
 };
 
 /* 消抖定时器回调：延时后确认按键状态 */

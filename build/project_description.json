@@ -1,7 +1,7 @@
 {
     "version":            "1.2",
     "project_name":       "osc_panel",
-    "project_version":    "0253336-dirty",
+    "project_version":    "54a3185-dirty",
     "project_path":       "D:/Projects/ESP/osc_panel",
     "idf_path":           "D:/esp/v5.5.3/esp-idf",
     "build_dir":          "D:/Projects/ESP/osc_panel/build",

@@ -28,7 +28,7 @@
 #include "uart_comm.h"
 #include "wifi_log.h"
 #include "waveform.h"
-/* #include "adc_sampler.h" */  /* 使用 ADC 时取消注释 */
+/* #include "adc_sampler.h" */  /* 若已接入 ADC 硬件（非 GPIO4/5），取消注释 */
 
 static const char *TAG = "MAIN";
 
@@ -73,46 +73,54 @@ static void handle_encoder(encoder_id_t id, int8_t dir)
 }
 
 /* ══════════════════════════════════════════════════════
- * 按键事件处理：切换工作模式
+ * 按键事件处理
+ *   BTN_RUN : 切换 内置波形 ↔ ADC 实采 (MODE_INTERNAL ↔ MODE_RUN)
+ *   BTN_TDR : 切换 TDR 模式 (MODE_INTERNAL ↔ MODE_TDR)
+ *   BTN_CH1 : 切换 CH1 波形显示 / 隐藏
+ *   BTN_CH2 : 切换 CH2 波形显示 / 隐藏
  * ════════════════════════════════════════════════════*/
 static void handle_button(button_id_t id, button_state_t state)
 {
-    /* 仅处理按下事件 */
     if (state != BTN_STATE_PRESSED) return;
 
     xSemaphoreTake(g_state.mutex, portMAX_DELAY);
 
     system_mode_t new_mode = g_state.mode;
+    int mode_changed = 0;
 
     switch (id) {
     case BTN_RUN:
-        new_mode = (g_state.mode == MODE_RUN) ? MODE_SCOPE : MODE_RUN;
-        break;
-    case BTN_SCOPE:
-        new_mode = MODE_SCOPE;
+        new_mode = (g_state.mode == MODE_RUN) ? MODE_INTERNAL : MODE_RUN;
+        mode_changed = 1;
         break;
     case BTN_TDR:
-        new_mode = MODE_TDR;
+        new_mode = (g_state.mode == MODE_TDR) ? MODE_INTERNAL : MODE_TDR;
+        mode_changed = 1;
         break;
-    case BTN_RESET:
-        /* 复位所有通道参数至默认值 */
-        g_state.ch[0].timebase_idx = TIMEBASE_DEFAULT;
-        g_state.ch[0].voltscale_idx = VOLTSCALE_DEFAULT;
-        g_state.ch[1].timebase_idx = TIMEBASE_DEFAULT;
-        g_state.ch[1].voltscale_idx = VOLTSCALE_DEFAULT;
-        new_mode = MODE_IDLE;
-        ESP_LOGI(TAG, "Reset: all params restored to default");
+    case BTN_CH1:
+        g_state.ch[0].visible = !g_state.ch[0].visible;
+        ESP_LOGI(TAG, "CH1 %s", g_state.ch[0].visible ? "show" : "hide");
+        break;
+    case BTN_CH2:
+        g_state.ch[1].visible = !g_state.ch[1].visible;
+        ESP_LOGI(TAG, "CH2 %s", g_state.ch[1].visible ? "show" : "hide");
         break;
     default:
         break;
     }
 
-    g_state.mode = new_mode;
+    if (mode_changed) {
+        g_state.mode = new_mode;
+        /* RUN → ADC 源，其余 → 内置正弦/三角 */
+        waveform_set_source(new_mode == MODE_RUN ? WAVE_SRC_ADC : WAVE_SRC_SINE);
+    }
+
+    system_state_t snap = g_state;
     xSemaphoreGive(g_state.mutex);
 
-    led_update(new_mode);
+    led_apply(&snap);
     uart_send_button(id, state);
-    uart_send_mode(new_mode);
+    if (mode_changed) uart_send_mode(new_mode);
 }
 
 /* ══════════════════════════════════════════════════════
@@ -177,13 +185,15 @@ void app_main(void)
 
     ESP_LOGI(TAG, "=== OSC Panel Control System starting ===");
 
-    /* 1. 初始化全局状态 */
+    /* 1. 初始化全局状态 (开机: 内置波形模式, CH1/CH2 均可见) */
     g_state.mutex = xSemaphoreCreateMutex();
-    g_state.mode  = MODE_IDLE;
+    g_state.mode  = MODE_INTERNAL;
     g_state.ch[0].timebase_idx  = TIMEBASE_DEFAULT;
     g_state.ch[0].voltscale_idx = VOLTSCALE_DEFAULT;
+    g_state.ch[0].visible       = 1;
     g_state.ch[1].timebase_idx  = TIMEBASE_DEFAULT;
     g_state.ch[1].voltscale_idx = VOLTSCALE_DEFAULT;
+    g_state.ch[1].visible       = 1;
 
     /* 2. 事件队列 (最多32个事件) */
     g_event_queue = xQueueCreate(32, sizeof(panel_event_t));
@@ -192,13 +202,16 @@ void app_main(void)
     uart_comm_init();
     led_init();
     lcd_init();
-    waveform_init();          /* 波形模块（正弦波模式） */
+    waveform_init();          /* 默认内置波形 (CH1 正弦 + CH2 三角) */
     encoder_init();
     button_init();
 
-    /* ── 切换为 ADC 实采时取消下方注释 ──
+    /* 上电根据初始状态刷新 LED (CH1/CH2 亮, RUN/TDR 灭) */
+    led_apply(&g_state);
+
+    /* ── 启用 ADC 实采时取消下方注释，并确认 adc_sampler.h 中的 GPIO
+     *    未与 encoder/button 冲突 (默认 GPIO4/5 会与 ENC2/ENC3 冲突) ──
     adc_sampler_init(adc_cb);
-    waveform_set_source(WAVE_SRC_ADC);
     adc_sampler_start();
     ── */
 

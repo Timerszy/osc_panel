@@ -4,12 +4,14 @@
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
 
-/* ─── 系统工作模式 ─── */
+/* ─── 系统工作模式 ───
+ *   INTERNAL : 开机默认，显示内置三角+正弦测试波形
+ *   RUN      : ADC 实采模式（按 RUN 进入）
+ *   TDR      : TDR 模式（按 TDR 进入）                         */
 typedef enum {
-    MODE_IDLE  = 0,
-    MODE_SCOPE = 1,   // 示波器模式
-    MODE_TDR   = 2,   // TDR 模式
-    MODE_RUN   = 3,   // 运行 (采集) 中
+    MODE_INTERNAL = 0,   // 内置波形（默认）
+    MODE_RUN      = 1,   // ADC 实采
+    MODE_TDR      = 2,   // TDR
 } system_mode_t;
 
 /* ─── 编码器ID ─── */
@@ -23,10 +25,10 @@ typedef enum {
 
 /* ─── 按键ID ─── */
 typedef enum {
-    BTN_RUN   = 0,
-    BTN_SCOPE = 1,
-    BTN_TDR   = 2,
-    BTN_RESET = 3,
+    BTN_RUN   = 0,   // 切换内置波形 / ADC 模式
+    BTN_CH1   = 1,   // CH1 波形 显/隐
+    BTN_TDR   = 2,   // 切换 TDR 模式
+    BTN_CH2   = 3,   // CH2 波形 显/隐
     BTN_COUNT = 4,
 } button_id_t;
 
@@ -61,6 +63,7 @@ static const char *const VOLTSCALE_STR[] = {
 typedef struct {
     uint8_t timebase_idx;   // 横坐标档位索引
     uint8_t voltscale_idx;  // 纵坐标档位索引
+    uint8_t visible;        // 1 = 显示, 0 = 隐藏
 } channel_param_t;
 
 /* ─── 系统状态 ─── */

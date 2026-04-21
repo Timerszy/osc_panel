@@ -13,16 +13,25 @@
 #define ENC4_PIN_A   GPIO_NUM_7    // CH2 纵坐标 (电压档)
 #define ENC4_PIN_B   GPIO_NUM_8
 
-/* ─── 按键 GPIO (低有效, 内部上拉) ─── */
+/* ─── 按键 GPIO (低有效, 内部上拉) ───
+ *   BTN_RUN  : 切换 内置波形 ↔ ADC 采样
+ *   BTN_TDR  : 切换 TDR 模式
+ *   BTN_CH1  : 切换 CH1 波形显/隐
+ *   BTN_CH2  : 切换 CH2 波形显/隐                              */
 #define BTN_RUN_PIN     GPIO_NUM_9
-#define BTN_SCOPE_PIN   GPIO_NUM_10
+#define BTN_CH1_PIN     GPIO_NUM_10
 #define BTN_TDR_PIN     GPIO_NUM_11
-#define BTN_RESET_PIN   GPIO_NUM_12
+#define BTN_CH2_PIN     GPIO_NUM_12
 
-/* ─── 指示灯 GPIO (高有效) ─── */
+/* ─── 指示灯 GPIO (高有效) ───
+ *   LED_RUN  : RUN(ADC) 模式亮
+ *   LED_TDR  : TDR 模式亮
+ *   LED_CH1  : CH1 可见时亮
+ *   LED_CH2  : CH2 可见时亮                                   */
 #define LED_RUN_PIN     GPIO_NUM_13
-#define LED_SCOPE_PIN   GPIO_NUM_14
+#define LED_CH1_PIN     GPIO_NUM_14
 #define LED_TDR_PIN     GPIO_NUM_15
+#define LED_CH2_PIN     GPIO_NUM_16
 
 /* ─── 板载 WS2812B RGB LED ─── */
 #define WS2812_PIN      GPIO_NUM_48

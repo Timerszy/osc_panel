@@ -7,8 +7,10 @@
  *   Y= 16~239 : 波形区 (224px = 8 格 × 28px/格)
  *
  * 数据来源:
- *   WAVE_SRC_SINE  — 内置正弦波（调试用）
+ *   WAVE_SRC_SINE  — 内置测试波形 (CH1 正弦 + CH2 三角)
  *   WAVE_SRC_ADC   — 外部 ADC 采样（通过 waveform_feed 喂入）
+ *
+ * 渲染根据 state->ch[i].visible 决定该通道是否绘制。
  */
 #pragma once
 #include <stdint.h>

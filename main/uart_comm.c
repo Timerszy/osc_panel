@@ -81,15 +81,17 @@ void uart_send_mode(system_mode_t mode)
 void uart_send_status(void)
 {
     xSemaphoreTake(g_state.mutex, portMAX_DELAY);
-    uint8_t data[5] = {
+    uint8_t data[7] = {
         (uint8_t)g_state.mode,
         g_state.ch[0].timebase_idx,
         g_state.ch[0].voltscale_idx,
+        g_state.ch[0].visible,
         g_state.ch[1].timebase_idx,
         g_state.ch[1].voltscale_idx,
+        g_state.ch[1].visible,
     };
     xSemaphoreGive(g_state.mutex);
-    send_frame(EVT_STATUS, data, 5);
+    send_frame(EVT_STATUS, data, sizeof(data));
 }
 
 void uart_send_heartbeat(void)

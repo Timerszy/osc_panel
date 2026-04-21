@@ -84,6 +84,32 @@ static void gen_sine_pixels(uint8_t *ypx, uint16_t n,
 }
 
 /* ══════════════════════════════════════════════════════
+ * 生成三角波 Y 像素坐标（相对波形区顶部）
+ *   cycles      : 一屏周期数
+ *   amp_divs    : 振幅（格数）
+ *   phase_offset: 归一化相位偏移 (0~1 对应 0~2π)
+ * ════════════════════════════════════════════════════*/
+static void gen_triangle_pixels(uint8_t *ypx, uint16_t n,
+                                 float cycles, float amp_divs, float phase_offset)
+{
+    float center = WAVE_AREA_H / 2.0f;
+    float amp_px = amp_divs * (float)WAVE_CELL_H;
+
+    for (uint16_t i = 0; i < n; i++) {
+        /* 相位 ∈ [0,1) */
+        float t = cycles * (float)i / (float)n + phase_offset;
+        t -= (float)((int)t);            /* 取小数部分 */
+        /* 对称三角: 0→1→0  峰值在 0.5 */
+        float tri = (t < 0.5f) ? (4.0f * t - 1.0f)
+                                : (3.0f - 4.0f * t);
+        float y = center - amp_px * tri;
+        if (y < 0.0f)                 y = 0.0f;
+        if (y >= (float)WAVE_AREA_H)  y = (float)(WAVE_AREA_H - 1);
+        ypx[i] = (uint8_t)y;
+    }
+}
+
+/* ══════════════════════════════════════════════════════
  * 将 ADC 原始值（0~4095）映射到波形区 Y 像素
  *   ADC 4095 → 顶部 (y=0)
  *   ADC 2048 → 中心
@@ -144,32 +170,36 @@ static void draw_graticule(void)
  * ════════════════════════════════════════════════════*/
 static void draw_info_bar(const system_state_t *st)
 {
-    /* 背景 */
+    /* 背景 (16px = 两行 8px 字符) */
     lcd_fill_rect(0, 0, LCD_WIDTH, WAVE_INFO_H, COL_INFO_BG);
 
     char buf[48];
-    /* 左侧：CH1 时基 + 电压 */
-    snprintf(buf, sizeof(buf), "H:%s V:%s",
+    uint16_t ch1_col = st->ch[0].visible ? COL_CH1 : 0x4208;
+    uint16_t ch2_col = st->ch[1].visible ? COL_CH2 : 0x4208;
+
+    /* 上行 y=0 — CH1 时基 + 电压档 */
+    snprintf(buf, sizeof(buf), "1H:%-6s V:%s",
              TIMEBASE_STR[st->ch[0].timebase_idx],
              VOLTSCALE_STR[st->ch[0].voltscale_idx]);
-    lcd_draw_string(2, 4, buf, COL_CH1, COL_INFO_BG, 1);
+    lcd_draw_string(2, 0, buf, ch1_col, COL_INFO_BG, 1);
 
-    /* 右侧：模式 */
+    /* 右侧跨两行 — 模式 (scale=2: 12×16px, 占满 info bar) */
     const char *mode_s;
     uint16_t    mode_c;
     switch (st->mode) {
-    case MODE_RUN:   mode_s = "RUN";   mode_c = 0x07E0; break;
-    case MODE_SCOPE: mode_s = "SCOPE"; mode_c = 0x07FF; break;
-    case MODE_TDR:   mode_s = "TDR";   mode_c = 0xF81F; break;
-    default:         mode_s = "IDLE";  mode_c = 0x8410; break;
+    case MODE_RUN:      mode_s = "RUN";  mode_c = 0x07E0; break;
+    case MODE_TDR:      mode_s = "TDR";  mode_c = 0xF81F; break;
+    case MODE_INTERNAL:
+    default:            mode_s = "INT";  mode_c = 0xFFFF; break;
     }
-    lcd_draw_string(LCD_WIDTH - (int)strlen(mode_s) * 6 - 2, 4,
-                    mode_s, mode_c, COL_INFO_BG, 1);
+    lcd_draw_string(LCD_WIDTH - (int)strlen(mode_s) * 12 - 2, 0,
+                    mode_s, mode_c, COL_INFO_BG, 2);
 
-    /* 中间：CH2 */
-    snprintf(buf, sizeof(buf), "2:%s",
+    /* 下行 y=8 — CH2 时基 + 电压档 */
+    snprintf(buf, sizeof(buf), "2H:%-6s V:%s",
+             TIMEBASE_STR[st->ch[1].timebase_idx],
              VOLTSCALE_STR[st->ch[1].voltscale_idx]);
-    lcd_draw_string(110, 4, buf, COL_CH2, COL_INFO_BG, 1);
+    lcd_draw_string(2, 8, buf, ch2_col, COL_INFO_BG, 1);
 }
 
 /* ══════════════════════════════════════════════════════
@@ -234,6 +264,7 @@ void waveform_render(const system_state_t *state)
     static uint8_t ypx[2][WAVE_SAMPLES];
 
     if (s_src == WAVE_SRC_SINE) {
+        /* 内置测试波形: CH1=正弦, CH2=三角 */
         static float s_phase = 0.0f;
         s_phase += 0.15f;
         if (s_phase > 2.0f * (float)M_PI) s_phase -= 2.0f * (float)M_PI;
@@ -241,7 +272,8 @@ void waveform_render(const system_state_t *state)
         float cyc1 = timebase_to_cycles(state->ch[0].timebase_idx);
         float cyc2 = timebase_to_cycles(state->ch[1].timebase_idx);
         gen_sine_pixels(ypx[0], WAVE_SAMPLES, cyc1, 2.8f, s_phase);
-        gen_sine_pixels(ypx[1], WAVE_SAMPLES, cyc2, 2.0f, s_phase + (float)M_PI / 3.0f);
+        gen_triangle_pixels(ypx[1], WAVE_SAMPLES, cyc2, 2.0f,
+                            s_phase / (2.0f * (float)M_PI));
     } else {
         xSemaphoreTake(s_mutex, portMAX_DELAY);
         adc_to_pixels(ypx[0], s_adc[0], WAVE_SAMPLES, state->ch[0].voltscale_idx);
@@ -249,8 +281,9 @@ void waveform_render(const system_state_t *state)
         xSemaphoreGive(s_mutex);
     }
 
-    draw_trace(ypx[1], COL_CH2);  /* CH2 先画（在下层） */
-    draw_trace(ypx[0], COL_CH1);  /* CH1 后画（在上层） */
+    /* 按 visibility 绘制 (CH2 先下层, CH1 后上层) */
+    if (state->ch[1].visible) draw_trace(ypx[1], COL_CH2);
+    if (state->ch[0].visible) draw_trace(ypx[0], COL_CH1);
 
     /* 4. 顶部信息栏 */
     draw_info_bar(state);

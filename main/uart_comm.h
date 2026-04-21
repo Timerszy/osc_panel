@@ -8,9 +8,14 @@
  *
  * 事件类型:
  *   0x01 ENCODER_EVENT: DATA=[enc_id(1)][dir(1): 0x01=CW, 0xFF=CCW]
+ *                       enc_id: 0=CH1-H 1=CH1-V 2=CH2-H 3=CH2-V
  *   0x02 BUTTON_EVENT:  DATA=[btn_id(1)][state(1): 0x01=按下, 0x00=释放]
+ *                       btn_id: 0=RUN 1=CH1 2=TDR 3=CH2
  *   0x03 MODE_CHANGE:   DATA=[mode(1)]
- *   0x04 STATUS_REPORT: DATA=[mode(1)][ch1_h(1)][ch1_v(1)][ch2_h(1)][ch2_v(1)]
+ *                       mode: 0=INTERNAL 1=RUN(ADC) 2=TDR
+ *   0x04 STATUS_REPORT: DATA=[mode(1)]
+ *                            [ch1_h(1)][ch1_v(1)][ch1_vis(1)]
+ *                            [ch2_h(1)][ch2_v(1)][ch2_vis(1)]
  *   0x05 HEARTBEAT:     DATA=[] (空帧, 每秒发一次)
  */
 
